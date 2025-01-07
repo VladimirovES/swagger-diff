@@ -29,10 +29,7 @@ jobs:
 
       - name: Save diff as artifact
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2.2.3
         with:
           name: swagger-diff
           path: diff.txt
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
