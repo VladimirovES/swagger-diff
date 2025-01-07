@@ -1,0 +1,38 @@
+name: Swagger Diff
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  compare-swagger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install openapi-diff
+        run: npm install -g @openapitools/openapi-diff
+
+      - name: Compare Swagger files
+        id: diff
+        run: |
+          openapi-diff ${{ inputs.old_spec }} ${{ inputs.new_spec }} --fail-on-incompatible > diff.txt
+          cat diff.txt
+
+      - name: Save diff as artifact
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: swagger-diff
+          path: diff.txt
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
