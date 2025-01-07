@@ -5,6 +5,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      old_spec_url:
+        description: 'URL for old Swagger specification'
+        required: true
+      new_spec_url:
+        description: 'URL for new Swagger specification'
+        required: true
 
 jobs:
   compare-swagger:
@@ -21,10 +28,16 @@ jobs:
       - name: Install openapi-diff
         run: npm install -g @openapitools/openapi-diff
 
+      - name: Download old Swagger specification
+        run: curl -o old-spec.yaml ${{ github.event.inputs.old_spec_url }}
+
+      - name: Download new Swagger specification
+        run: curl -o new-spec.yaml ${{ github.event.inputs.new_spec_url }}
+
       - name: Compare Swagger files
         id: diff
         run: |
-          openapi-diff ${{ inputs.old_spec }} ${{ inputs.new_spec }} --fail-on-incompatible > diff.txt
+          openapi-diff old-spec.yaml new-spec.yaml --fail-on-incompatible > diff.txt
           cat diff.txt
 
       - name: Save diff as artifact
