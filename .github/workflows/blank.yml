@@ -1,16 +1,13 @@
 name: Swagger Diff
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       old_spec_url:
-        description: 'URL для старой спецификации Swagger'
+        description: 'URL для старой спецификации'
         required: true
       new_spec_url:
-        description: 'URL для новой спецификации Swagger'
+        description: 'URL для новой спецификации'
         required: true
 
 jobs:
@@ -20,24 +17,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
         with:
-          node-version: '16'
-
-      - name: Install openapi-diff
-        run: npm install -g @openapitools/openapi-diff
+          distribution: 'temurin'
+          java-version: '11'   # openapi-diff требует Java 11
 
       - name: Download old Swagger specification
-        run: curl -sS -o old-spec.yaml ${{ github.event.inputs.old_spec_url }}
+        run: curl -sS -o old-spec.yaml "${{ github.event.inputs.old_spec_url }}"
 
       - name: Download new Swagger specification
-        run: curl -sS -o new-spec.yaml ${{ github.event.inputs.new_spec_url }}
+        run: curl -sS -o new-spec.yaml "${{ github.event.inputs.new_spec_url }}"
+
+      - name: Download openapi-diff JAR
+        run: |
+          curl -L -o openapi-diff-cli.jar \
+            https://github.com/OpenAPITools/openapi-diff/releases/download/v3.0.2/openapi-diff-cli-3.0.2.jar
 
       - name: Compare Swagger files
         id: diff
         run: |
-          openapi-diff old-spec.yaml new-spec.yaml --fail-on-incompatible > diff.txt
+          java -jar openapi-diff-cli.jar old-spec.yaml new-spec.yaml --fail-on-incompatible > diff.txt
           cat diff.txt
 
       - name: Upload diff as artifact
