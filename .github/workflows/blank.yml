@@ -25,18 +25,31 @@ jobs:
 
       - name: Download old Swagger specification (JSON)
         run: |
+          echo "Downloading old spec from ${{ github.event.inputs.old_spec_url }}"
           curl -sS -o old-spec.json "${{ github.event.inputs.old_spec_url }}"
-          ls -l old-spec.json  
+          echo "==== FILE INFO (old) ===="
+          file old-spec.json
+          echo "==== HEAD OF FILE (old) ===="
+          head -n 10 old-spec.json
+
       - name: Download new Swagger specification (JSON)
         run: |
+          echo "Downloading new spec from ${{ github.event.inputs.new_spec_url }}"
           curl -sS -o new-spec.json "${{ github.event.inputs.new_spec_url }}"
-          ls -l new-spec.json  
+          echo "==== FILE INFO (new) ===="
+          file new-spec.json
+          echo "==== HEAD OF FILE (new) ===="
+          head -n 10 new-spec.json
 
       - name: Download openapi-diff JAR
         run: |
-          curl -sS -L -o openapi-diff-cli.jar \
+          echo "Downloading openapi-diff v3.0.2"
+          curl -v -L -o openapi-diff-cli.jar \
             https://github.com/OpenAPITools/openapi-diff/releases/download/v3.0.2/openapi-diff-cli-3.0.2.jar
-          ls -l openapi-diff-cli.jar
+          echo "==== FILE INFO (JAR) ===="
+          file openapi-diff-cli.jar
+          echo "==== HEAD OF FILE (JAR) ===="
+          head -n 20 openapi-diff-cli.jar
 
       - name: Compare Swagger files
         id: diff
