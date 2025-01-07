@@ -7,10 +7,10 @@ on:
   workflow_dispatch:
     inputs:
       old_spec_url:
-        description: 'URL for old Swagger specification'
+        description: 'URL для старой спецификации Swagger'
         required: true
       new_spec_url:
-        description: 'URL for new Swagger specification'
+        description: 'URL для новой спецификации Swagger'
         required: true
 
 jobs:
@@ -18,21 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install Node.js
-        uses: actions/setup-node@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Install openapi-diff
         run: npm install -g @openapitools/openapi-diff
 
       - name: Download old Swagger specification
-        run: curl -o old-spec.yaml ${{ github.event.inputs.old_spec_url }}
+        run: curl -sS -o old-spec.yaml ${{ github.event.inputs.old_spec_url }}
 
       - name: Download new Swagger specification
-        run: curl -o new-spec.yaml ${{ github.event.inputs.new_spec_url }}
+        run: curl -sS -o new-spec.yaml ${{ github.event.inputs.new_spec_url }}
 
       - name: Compare Swagger files
         id: diff
@@ -40,9 +40,9 @@ jobs:
           openapi-diff old-spec.yaml new-spec.yaml --fail-on-incompatible > diff.txt
           cat diff.txt
 
-      - name: Save diff as artifact
+      - name: Upload diff as artifact
         if: always()
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v3
         with:
           name: swagger-diff
           path: diff.txt
