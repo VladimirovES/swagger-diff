@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       old_spec_url:
-        description: 'URL для старой спецификации (JSON)'
+        description: 'URL для старой спецификации (JSON/YAML)'
         required: true
       new_spec_url:
-        description: 'URL для новой спецификации (JSON)'
+        description: 'URL для новой спецификации (JSON/YAML)'
         required: true
 
 jobs:
@@ -17,44 +17,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Java 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Download old Swagger specification (JSON)
+      - name: Download old Swagger specification
         run: |
           echo "Downloading old spec from ${{ github.event.inputs.old_spec_url }}"
           curl -sS -o old-spec.json "${{ github.event.inputs.old_spec_url }}"
-          echo "==== FILE INFO (old) ===="
-          file old-spec.json
-          echo "==== HEAD OF FILE (old) ===="
+          # Для отладки (необязательно):
+          echo "=== OLD SPEC HEAD ==="
           head -n 10 old-spec.json
 
-      - name: Download new Swagger specification (JSON)
+      - name: Download new Swagger specification
         run: |
           echo "Downloading new spec from ${{ github.event.inputs.new_spec_url }}"
           curl -sS -o new-spec.json "${{ github.event.inputs.new_spec_url }}"
-          echo "==== FILE INFO (new) ===="
-          file new-spec.json
-          echo "==== HEAD OF FILE (new) ===="
+          # Для отладки (необязательно):
+          echo "=== NEW SPEC HEAD ==="
           head -n 10 new-spec.json
 
-      - name: Download openapi-diff JAR
-        run: |
-          echo "Downloading openapi-diff v3.0.2"
-          curl -v -L -o openapi-diff-cli.jar \
-            https://github.com/OpenAPITools/openapi-diff/releases/download/v3.0.2/openapi-diff-cli-3.0.2.jar
-          echo "==== FILE INFO (JAR) ===="
-          file openapi-diff-cli.jar
-          echo "==== HEAD OF FILE (JAR) ===="
-          head -n 20 openapi-diff-cli.jar
-
-      - name: Compare Swagger files
+      - name: Compare Swagger files via Docker
         id: diff
         run: |
-          java -jar openapi-diff-cli.jar old-spec.json new-spec.json --fail-on-incompatible > diff.txt
+          docker run --rm \
+            -v ${{ github.workspace }}:/specs \
+            openapitools/openapi-diff:latest \
+            /specs/old-spec.json /specs/new-spec.json --fail-on-incompatible > diff.txt
+          echo "=== DIFF OUTPUT ==="
           cat diff.txt
 
       - name: Upload diff as artifact
